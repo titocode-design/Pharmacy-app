@@ -1,0 +1,47 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:      # lets you press "Run workflow" by hand
+  push:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install packages
+        run: npm install
+
+      - name: Create the Android project
+        run: npm run android:add
+
+      - name: Copy the web files into it
+        run: npm run sync
+
+      - name: Build the APK
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew assembleDebug
+
+      - name: Save the APK so you can download it
+        uses: actions/upload-artifact@v4
+        with:
+          name: pharmacy-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
