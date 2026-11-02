@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08332D">
+<title>Pharmacy</title>
+<style>
+:root{
+  color-scheme:light;
+  --bg:#E9F0EE; --surface:#FFFFFF; --ink:#0A1D1B; --muted:#3A5551; --line:#B7C9C5; --hover:#E4F2EE; --zebra:#F6FAF9;
+  --side:#08332D; --side-ink:#E8F5F2; --side-on:#0E7A66;
+  --brand:#0B7A67; --brand-dark:#085C4E; --brand-ink:#FFFFFF;
+  --warn:#B42318; --warn-bg:#FEE4E2; --ok:#0F6B36; --ok-bg:#DCF5E6; --amber:#7A4100; --amber-bg:#FFEFC7;
+  --field:#FFFFFF; --field-line:#7F9893; --shadow:0 1px 3px rgba(10,29,27,.12);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--ink);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+
+/* ---------- Layout ---------- */
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+.side{background:var(--side);color:var(--side-ink);padding:20px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+.brand{display:flex;align-items:center;gap:10px;color:#fff;font-weight:800;font-size:21px;padding:4px 10px 24px}
+.brand svg{width:28px;height:28px;stroke:#fff;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.nav{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;color:var(--side-ink);font:inherit;font-size:15.5px;font-weight:600;padding:12px 13px;border-radius:10px;cursor:pointer;margin-bottom:4px;position:relative}
+.nav svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.nav:hover{background:rgba(255,255,255,.12);color:#fff}
+.nav.on{background:var(--side-on);color:#fff;font-weight:700}
+.nav .badge{margin-left:auto;background:#E5484D;color:#fff;font-size:12.5px;min-width:22px;height:22px;line-height:22px;text-align:center;border-radius:11px;font-weight:800;padding:0 7px}
+.side small{margin-top:auto;padding:10px 12px;color:var(--side-ink);opacity:.8;font-size:12.5px}
+.main{padding:24px 32px 44px;min-width:0}
+.top{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px}
+.top h1{font-size:28px;font-weight:800;letter-spacing:-.01em;color:var(--ink)}
+.top span{color:var(--muted);font-weight:600}
+.view{display:none}
+.view.on{display:block}
+h2{font-size:17px;font-weight:700;margin-bottom:12px;color:var(--ink)}
+
+/* ---------- Components ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;box-shadow:var(--shadow)}
+.card.flush{padding:0;overflow:hidden}
+.card.flush h2{padding:16px 20px 12px;margin:0}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px}
+.stat{background:var(--surface);border:1px solid var(--line);border-left:6px solid var(--brand);border-radius:14px;padding:16px 18px;box-shadow:var(--shadow)}
+.stat small{color:var(--muted);font-size:14px;font-weight:600}
+.stat b{display:block;font-size:28px;font-weight:800;margin-top:2px;color:var(--ink)}
+.stat.alert{background:var(--warn-bg);border-color:#E9A19B;border-left-color:var(--warn)}
+.stat.alert b{color:var(--warn)}
+.stat.exp{background:var(--amber-bg);border-color:#E2BD63;border-left-color:#C77700}
+.stat.exp b{color:var(--amber)}
+.banner{border:1px solid #E9A19B;border-left:6px solid var(--warn);background:var(--warn-bg);border-radius:12px;padding:13px 16px;margin-bottom:12px;display:flex;gap:12px;color:var(--ink)}
+.banner strong{color:var(--warn);font-size:16px}
+.banner .sub{color:var(--ink)}
+.banner.amber{border-color:#E2BD63;border-left-color:#C77700;background:var(--amber-bg)}
+.banner.amber strong{color:var(--amber)}
+.hide{display:none!important}
+.sub{color:var(--muted);font-size:13.5px}
+.bad{color:var(--warn);font-weight:700}
+.soonc{color:var(--amber);font-weight:700}
+
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:12.5px;text-transform:uppercase;letter-spacing:.04em;color:#1E3A36;font-weight:800;padding:11px 20px;border-bottom:2px solid var(--line);border-top:1px solid var(--line);background:#E2EEEB;white-space:nowrap}
+td{padding:12px 20px;border-bottom:1px solid var(--line);vertical-align:middle;font-size:15.5px;color:var(--ink)}
+tbody tr:nth-child(even){background:var(--zebra)}
+tbody tr:hover{background:var(--hover)}
+tr:last-child td{border-bottom:0}
+td.r,th.r{text-align:right}
+td.name{font-weight:700}
+td.empty{text-align:center;color:var(--muted);padding:30px;font-weight:600}
+tr.pick{cursor:pointer}
+tr.hi,tbody tr.hi:nth-child(even){background:#CDEBE4;box-shadow:inset 5px 0 0 var(--brand)}
+tr.dim{opacity:.55}
+
+.pill{font-size:13.5px;font-weight:800;padding:3px 11px;border-radius:99px;white-space:nowrap;display:inline-block;border:1px solid transparent}
+.pill.low{background:var(--warn-bg);color:#9A1B12;border-color:#E9A19B}
+.pill.mid{background:var(--amber-bg);color:var(--amber);border-color:#E2BD63}
+.pill.ok{background:var(--ok-bg);color:var(--ok);border-color:#9AD7B3}
+.pill.dead{background:var(--warn);color:#fff;border-color:var(--warn)}
+
+label{display:block;font-size:14.5px;color:var(--ink);font-weight:600;margin:16px 0 6px}
+label:first-child{margin-top:0}
+input,select{width:100%;font:inherit;color:var(--ink);background:var(--field);border:2px solid var(--field-line);border-radius:10px;padding:11px 13px;outline:none}
+input::placeholder{color:#6B817D;opacity:1}
+input:focus,select:focus{border-color:var(--brand);box-shadow:0 0 0 4px rgba(11,122,103,.2)}
+input:disabled{opacity:.75}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.btn{font:inherit;font-weight:700;border:2px solid var(--brand);border-radius:10px;padding:11px 20px;background:var(--brand);color:var(--brand-ink);cursor:pointer}
+.btn:hover:not(:disabled){background:var(--brand-dark);border-color:var(--brand-dark)}
+.btn.block{width:100%;margin-top:16px;padding:14px;font-size:17px}
+.btn.ghost{background:#fff;color:var(--brand-dark);border-color:var(--brand)}
+.btn.ghost:hover:not(:disabled){background:var(--hover);color:var(--brand-dark);border-color:var(--brand)}
+.btn.danger{background:#fff;color:var(--warn);border-color:var(--warn)}
+.btn.danger:hover:not(:disabled){background:var(--warn-bg);border-color:var(--warn)}
+.btn.sm{padding:6px 13px;font-size:14px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #F5B301;outline-offset:2px}
+.toolbar{display:flex;gap:12px;margin-bottom:16px;align-items:center}
+.toolbar input{max-width:380px}
+.toolbar select{max-width:230px}
+.actions{display:flex;gap:8px;justify-content:flex-end}
+
+/* Sell screen */
+.sellgrid{display:grid;grid-template-columns:1fr 410px;gap:18px;align-items:start}
+.cartcard{position:sticky;top:20px;border-top:5px solid var(--brand)}
+.pickbar{display:flex;gap:14px;align-items:flex-end;margin-top:16px;padding:14px;border:2px solid var(--brand);border-radius:12px;background:var(--hover)}
+.pickbar .info{flex:1;min-width:0}
+.pickbar .info b{display:block;font-size:17px}
+.pickbar .q{width:110px}
+.pickbar label{margin-top:0}
+.line{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.line:last-child{border-bottom:0}
+.line .t{font-weight:800}
+.x{background:none;border:0;color:var(--warn);font-size:24px;cursor:pointer;padding:0 6px;font-weight:700}
+.total{display:flex;justify-content:space-between;align-items:baseline;border-top:3px solid var(--ink);margin-top:12px;padding-top:14px;font-weight:700;font-size:18px}
+.total b{font-size:34px;font-weight:800}
+.empty{color:var(--muted);text-align:center;padding:24px 8px;font-weight:600}
+.note{margin-top:14px;padding:12px 14px;border-radius:10px;background:var(--hover);color:var(--ink);font-size:14.5px;font-weight:600}
+.regwrap{display:grid;grid-template-columns:minmax(0,660px) 330px;gap:18px;align-items:start}
+
+.errbar{background:var(--warn-bg);border:1px solid #E9A19B;border-left:6px solid var(--warn);color:var(--ink);border-radius:12px;padding:13px 16px;margin-bottom:16px}
+.errbar strong{color:var(--warn)}
+.toast{position:fixed;right:24px;bottom:24px;background:#0A1D1B;color:#fff;padding:14px 20px;border-radius:12px;max-width:420px;font-weight:600;opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.toast.show{opacity:1}
+.toast.bad{background:var(--warn);color:#fff}
+@media (prefers-reduced-motion:reduce){.toast{transition:none}}
+
+/* ---------- Smaller screens ---------- */
+@media (max-width:1100px){
+  .grid4{grid-template-columns:repeat(2,1fr)}
+  .grid2,.sellgrid,.regwrap{grid-template-columns:1fr}
+  .cartcard{position:static}
+}
+@media (max-width:820px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto;flex-direction:row;flex-wrap:wrap;padding:10px;gap:4px}
+  .brand{padding:6px 10px}
+  .side small{display:none}
+  .nav{width:auto;margin:0}
+  .main{padding:16px}
+  .card.flush{overflow-x:auto}
+}
+
+/* ---------- Phone layout ---------- */
+.sellgrid{grid-template-columns:1fr 410px;grid-template-areas:"search cart" "list cart"}
+.sellsearch{grid-area:search}
+.selllist{grid-area:list}
+.cartcard{grid-area:cart;align-self:start}
+@media (max-width:1100px){
+  .sellgrid{grid-template-columns:1fr;grid-template-areas:"search" "cart" "list"}
+}
+@media (max-width:820px){
+  body{padding-bottom:78px}
+  .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;flex-direction:row;justify-content:space-around;padding:4px 2px;gap:0;z-index:20;box-shadow:0 -2px 10px rgba(0,0,0,.25)}
+  .brand,.side small{display:none}
+  .nav{flex-direction:column;justify-content:center;gap:2px;width:auto;flex:1;margin:0;padding:7px 2px 6px;font-size:11.5px;text-align:center}
+  .nav svg{width:23px;height:23px}
+  .nav .badge{position:absolute;top:1px;right:calc(50% - 22px);margin:0;min-width:18px;height:18px;line-height:18px;font-size:11px;padding:0 5px}
+  .main{padding:14px 12px 22px}
+  .top{margin-bottom:14px}
+  .top h1{font-size:22px}
+  .top span{font-size:12px}
+  .grid4{grid-template-columns:1fr 1fr;gap:10px}
+  .stat{padding:12px 14px}
+  .stat b{font-size:21px}
+  th,td{padding:10px 12px;font-size:14.5px}
+  .card{padding:16px}
+  .card.flush h2{padding:14px 14px 10px}
+  .toolbar{flex-wrap:wrap}
+  .toolbar input,.toolbar select{max-width:none;flex:1 1 100%}
+  .row2{grid-template-columns:1fr}
+  .pickbar{flex-wrap:wrap}
+  .pickbar .info{flex:1 1 100%}
+  .toast{left:12px;right:12px;bottom:88px;max-width:none}
+  .total b{font-size:28px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="side">
+    <div class="brand">
+      <svg viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 7.5l5 5" transform="rotate(0)"/></svg>
+      Pharmacy
+    </div>
+    <button class="nav on" data-v="dashboard"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>Home<span class="badge hide" id="badge">0</span></button>
+    <button class="nav" data-v="sell"><svg viewBox="0 0 24 24"><circle cx="9" cy="20" r="1.5"/><circle cx="18" cy="20" r="1.5"/><path d="M3 4h3l2.5 11h10L21 7H7"/></svg>Sell</button>
+    <button class="nav" data-v="stock"><svg viewBox="0 0 24 24"><path d="M21 8l-9-5-9 5 9 5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg>Stock</button>
+    <button class="nav" data-v="register"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>Add stock</button>
+    <button class="nav" data-v="sales"><svg viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Sales</button>
+    <small>Data is saved on this phone</small>
+  </aside>
+
+  <div class="main">
+    <div class="top"><h1 id="title">Dashboard</h1><span id="today"></span></div>
+    <div class="errbar hide" id="err"></div>
+
+    <!-- DASHBOARD -->
+    <section class="view on" id="v-dashboard">
+      <div class="grid4">
+        <div class="stat"><small>Medicines</small><b id="sMed">0</b></div>
+        <div class="stat"><small>Today's sales</small><b id="sSales">TSh 0</b><small id="sCount"></small></div>
+        <div class="stat alert hide" id="sLowBox"><small>Running low</small><b id="sLow">0</b></div>
+        <div class="stat exp hide" id="sExpBox"><small>Nearing expiry</small><b id="sExp">0</b></div>
+      </div>
+      <div class="banner hide" id="banLow"><span>⚠️</span><div><strong id="banLowT"></strong><div class="sub" id="banLowD"></div></div></div>
+      <div class="banner amber hide" id="banExp"><span>⏳</span><div><strong id="banExpT"></strong><div class="sub" id="banExpD"></div></div></div>
+      <div class="grid2">
+        <div class="card flush"><h2>Running low</h2><table><thead><tr><th>Medicine</th><th class="r">Left</th><th class="r">Alert level</th></tr></thead><tbody id="lowBody"></tbody></table></div>
+        <div class="card flush"><h2>Nearing expiry</h2><table><thead><tr><th>Medicine</th><th>Expiry</th><th class="r">In stock</th></tr></thead><tbody id="expBody"></tbody></table></div>
+      </div>
+      <div class="card flush"><h2>Recent sales</h2><table><thead><tr><th>Time</th><th>Items</th><th class="r">Total</th></tr></thead><tbody id="recentBody"></tbody></table></div>
+    <div class="card" style="margin-top:18px">
+        <h2>Backup</h2>
+        <p class="sub">Data lives only on this phone. If you uninstall the app or lose the phone, it is gone. Save a copy regularly and send it to WhatsApp, email or a computer.</p>
+        <div class="toolbar" style="margin:12px 0 0;flex-wrap:wrap">
+          <button class="btn" id="bkBtn">Back up data</button>
+          <button class="btn ghost" id="rsBtn">Restore from backup</button>
+          <input type="file" id="rsFile" class="hide">
+        </div>
+      </div>
+    </section>
+
+    <!-- SELL -->
+    <section class="view" id="v-sell">
+      <div class="sellgrid">
+        <div class="card sellsearch">
+          <label for="sq">Type the medicine name</label>
+          <input id="sq" type="text" placeholder="Type to search, tap a medicine to select" autocomplete="off">
+          <div class="pickbar hide" id="pickbar">
+            <div class="info"><b id="pName"></b><span class="sub" id="pInfo"></span></div>
+            <div class="q"><label for="pQty">Quantity</label><input id="pQty" type="number" min="1" value="1" inputmode="numeric"></div>
+            <button class="btn" id="addBtn">Add to sale</button>
+          </div>
+        </div>
+
+        <div class="card cartcard">
+          <h2>Current sale</h2>
+          <div id="cart"></div>
+          <div class="total"><span>Total</span><b id="total">TSh 0</b></div>
+          <button class="btn block" id="sellBtn" disabled>Complete sale</button>
+          <button class="btn ghost block" id="clearBtn" style="margin-top:8px;padding:11px;font-size:15px">Clear sale</button>
+          <div class="note hide" id="lastSale"></div>
+        </div>
+
+        <div class="card flush selllist">
+          <table>
+            <thead><tr><th>Medicine</th><th class="r">Price</th><th>Stock</th><th>Expiry</th></tr></thead>
+            <tbody id="sBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- STOCK -->
+    <section class="view" id="v-stock">
+      <div class="toolbar">
+        <input id="stq" type="search" placeholder="Search medicine…">
+        <select id="stf">
+          <option value="all">All medicines</option>
+          <option value="low">Running low</option>
+          <option value="exp">Nearing expiry</option>
+          <option value="dead">Expired</option>
+        </select>
+      </div>
+      <div class="card flush">
+        <table>
+          <thead><tr><th>Medicine</th><th class="r">Price</th><th>In stock</th><th>Alert level</th><th>Expiry</th><th></th></tr></thead>
+          <tbody id="stBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section class="view" id="v-register">
+      <div class="regwrap">
+        <div class="card">
+          <label for="rN">Medicine name</label>
+          <input id="rN" type="text" list="dl" placeholder="e.g. Amoxicillin 500mg" autocomplete="off">
+          <datalist id="dl"></datalist>
+          <div class="row2">
+            <div><label for="rQ">Quantity received</label><input id="rQ" type="number" min="1" inputmode="numeric"></div>
+            <div><label for="rP">Selling price per unit (TSh)</label><input id="rP" type="number" min="0" step="any" inputmode="decimal"></div>
+          </div>
+          <div class="row2">
+            <div><label for="rM">Alert me when stock reaches</label><input id="rM" type="number" min="1" value="10" inputmode="numeric"></div>
+            <div><label for="rE">Expiry date</label><input id="rE" type="date"></div>
+          </div>
+          <label for="rD">Alert me when expiry is within (days)</label>
+          <input id="rD" type="number" min="1" value="90" inputmode="numeric">
+          <button class="btn block" id="regBtn">Save stock</button>
+        </div>
+        <div class="card">
+          <h2>Good to know</h2>
+          <p class="sub" id="regNote">If the medicine already exists, the quantity you enter is added to the current stock. For a new medicine, enter the selling price.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- SALES HISTORY -->
+    <section class="view" id="v-sales">
+      <div class="toolbar">
+        <input id="sdate" type="date" style="max-width:200px">
+        <button class="btn ghost sm" id="sToday">Today</button>
+        <button class="btn ghost sm" id="sAll">All recent</button>
+        <span class="sub" id="sSummary" style="margin-left:auto"></span>
+      </div>
+      <div class="card flush">
+        <table>
+          <thead><tr><th>Sale</th><th>Date and time</th><th>Items</th><th class="r">Total</th></tr></thead>
+          <tbody id="salesBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="vendor/sql-wasm.js"></script>
+<script src="js/store.js"></script>
+<script src="js/logic.js"></script>
+<script src="js/bridge.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money = n => "TSh " + Number(n).toLocaleString("en-US", {maximumFractionDigits: 2});
+const plural = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+
+let items = [], cart = [], selected = null, hi = 0, view = "dashboard";
+const TITLES = {dashboard:"Dashboard", sell:"Sell", stock:"Stock", register:"Register stock", sales:"Sales history"};
+
+/* ---------- API (talks to the desktop program, no server needed) ---------- */
+async function api(action, {body = null, params = {}} = {}) {
+  if (!window.pharmacy) throw new Error("The app data is not ready. Close and reopen the app.");
+  const r = await window.pharmacy.api({action, params, body});
+  if (!r.ok) throw new Error(r.error);
+  return r.data;
+}
+
+/* ---------- Helpers ---------- */
+const stockState = i => i.qty <= i.min_qty ? "low" : i.qty <= i.min_qty * 1.6 ? "mid" : "ok";
+const expState = i => i.days_left === null ? "ok" : i.days_left <= 0 ? "dead" : i.days_left <= i.warn_days ? "soon" : "ok";
+const expText = i => {
+  if (i.days_left === null) return "";
+  if (i.days_left < 0) return "Expired " + plural(-i.days_left, "day") + " ago";
+  if (i.days_left === 0) return "Expires today";
+  return "Expires in " + plural(i.days_left, "day");
+};
+const sellable = i => i.qty > 0 && expState(i) !== "dead";
+const stockPill = i => `<span class="pill ${stockState(i)}">${i.qty === 0 ? "Out of stock" : i.qty}</span>`;
+const expCell = i => {
+  if (!i.expiry) return '<span class="sub">—</span>';
+  const s = expState(i), c = s === "dead" ? "bad" : s === "soon" ? "soonc" : "sub";
+  return `<div>${esc(i.expiry)}</div><div class="${c}" style="font-size:13px">${esc(expText(i))}</div>`;
+};
+const saleItems = s => s.lines.map(l => esc(l.name) + " ×" + l.qty).join(", ");
+
+function toast(msg, bad = false) {
+  const t = $("toast");
+  t.textContent = msg; t.className = "toast show" + (bad ? " bad" : "");
+  clearTimeout(toast.h); toast.h = setTimeout(() => t.classList.remove("show"), 3200);
+}
+function showErr(m) { const e = $("err"); e.innerHTML = "<strong>Problem:</strong> " + esc(m); e.classList.remove("hide"); }
+function hideErr() { $("err").classList.add("hide"); }
+
+function setBadge(n) { const b = $("badge"); b.textContent = n; b.classList.toggle("hide", !n); }
+function badgeFromItems(list) {
+  const ids = new Set();
+  list.forEach(i => {
+    if (i.qty <= i.min_qty) ids.add(i.id);
+    if (i.qty > 0 && i.days_left !== null && i.days_left <= i.warn_days) ids.add(i.id);
+  });
+  setBadge(ids.size);
+}
+
+/* ---------- Navigation ---------- */
+function go(v) {
+  view = v;
+  document.querySelectorAll(".view").forEach(s => s.classList.toggle("on", s.id === "v-" + v));
+  document.querySelectorAll(".nav").forEach(b => b.classList.toggle("on", b.dataset.v === v));
+  $("title").textContent = TITLES[v];
+  refresh();
+}
+document.querySelectorAll(".nav").forEach(b => b.onclick = () => go(b.dataset.v));
+
+async function refresh() {
+  try {
+    hideErr();
+    if (view === "dashboard") {
+      renderDashboard(await api("dashboard"));
+    } else {
+      items = (await api("items")).items;
+      badgeFromItems(items);
+      if (view === "sell") { renderSell(); if (window.innerWidth > 820) $("sq").focus(); }
+      if (view === "stock") renderStock();
+      if (view === "register") renderRegisterList();
+      if (view === "sales") await loadSales();
+    }
+  } catch (e) { showErr(e.message); }
+}
+
+/* ---------- Dashboard ---------- */
+function renderDashboard(d) {
+  const s = d.stats;
+  $("sMed").textContent = s.medicines;
+  $("sSales").textContent = money(s.today_total);
+  $("sCount").textContent = plural(s.today_count, "sale") + " today";
+  $("sLow").textContent = s.low_count;
+  $("sLowBox").classList.toggle("hide", !s.low_count);
+  $("sExp").textContent = s.exp_count;
+  $("sExpBox").classList.toggle("hide", !s.exp_count);
+
+  const ids = new Set([...d.low.map(i => i.id), ...d.expiring.map(i => i.id)]);
+  setBadge(ids.size);
+
+  $("banLow").classList.toggle("hide", !d.low.length);
+  if (d.low.length) {
+    $("banLowT").textContent = (d.low.length === 1 ? "1 medicine is" : d.low.length + " medicines are") + " running low — reorder stock";
+    $("banLowD").textContent = d.low.slice(0, 4).map(i => i.name).join(", ") + (d.low.length > 4 ? " and more" : "");
+  }
+  const dead = d.expiring.filter(i => expState(i) === "dead");
+  $("banExp").classList.toggle("hide", !d.expiring.length);
+  if (d.expiring.length) {
+    $("banExpT").textContent = dead.length
+      ? (dead.length === 1 ? "1 medicine has expired — remove it from the shelf" : dead.length + " medicines have expired — remove them from the shelf")
+      : (d.expiring.length === 1 ? "1 medicine is nearing expiry" : d.expiring.length + " medicines are nearing expiry");
+    $("banExpD").textContent = d.expiring.slice(0, 4).map(i => i.name).join(", ") + (d.expiring.length > 4 ? " and more" : "");
+  }
+
+  $("lowBody").innerHTML = d.low.length ? d.low.map(i => `<tr><td class="name">${esc(i.name)}</td><td class="r">${stockPill(i)}</td><td class="r sub">${i.min_qty}</td></tr>`).join("")
+    : `<tr><td colspan="3" class="empty">All stock levels are fine.</td></tr>`;
+  $("expBody").innerHTML = d.expiring.length ? d.expiring.map(i => `<tr><td class="name">${esc(i.name)}</td><td>${expCell(i)}</td><td class="r">${i.qty}</td></tr>`).join("")
+    : `<tr><td colspan="3" class="empty">No medicines are nearing expiry.</td></tr>`;
+  $("recentBody").innerHTML = d.recent.length ? d.recent.map(r => `<tr><td class="sub">${esc(r.created_at.slice(0, 16))}</td><td>${saleItems(r)}</td><td class="r"><b>${money(r.total)}</b></td></tr>`).join("")
+    : `<tr><td colspan="3" class="empty">No sales yet. Open “Sell” to start.</td></tr>`;
+}
+
+/* ---------- Sell ---------- */
+function sellMatches() {
+  const q = $("sq").value.trim().toLowerCase();
+  return items.filter(i => !q || i.name.toLowerCase().includes(q))
+    .sort((a, b) => (sellable(b) - sellable(a)) || a.name.localeCompare(b.name));
+}
+function renderSell() {
+  const list = sellMatches();
+  if (hi >= list.length) hi = Math.max(0, list.length - 1);
+  $("sBody").innerHTML = list.length ? list.slice(0, window.innerWidth <= 820 ? 10 : 80).map((i, idx) => `
+    <tr class="${sellable(i) ? "pick" : "dim"} ${idx === hi ? "hi" : ""}" data-id="${i.id}">
+      <td class="name">${esc(i.name)}</td><td class="r">${money(i.price)}</td>
+      <td>${expState(i) === "dead" ? '<span class="pill dead">Expired</span>' : stockPill(i)}</td>
+      <td>${expCell(i)}</td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">${items.length ? "No medicine matches your search." : "No medicines yet. Add some under “Register stock”."}</td></tr>`;
+  $("sBody").querySelectorAll("tr[data-id]").forEach(tr => tr.onclick = () => pickItem(+tr.dataset.id));
+  renderCart();
+}
+function pickItem(id) {
+  const it = items.find(i => i.id === id);
+  if (!it) return;
+  if (it.qty <= 0) return toast(it.name + " is out of stock.", true);
+  if (expState(it) === "dead") return toast(it.name + " has expired. Do not sell it.", true);
+  if (expState(it) === "soon") toast("Check: " + it.name + " — " + expText(it).toLowerCase());
+  selected = it;
+  $("sq").value = it.name;
+  $("pName").textContent = it.name;
+  $("pInfo").textContent = money(it.price) + " each · " + it.qty + " in stock";
+  $("pQty").value = 1; $("pQty").max = it.qty;
+  $("pickbar").classList.remove("hide");
+  if (window.innerWidth <= 1100) $("pickbar").scrollIntoView({behavior: "smooth", block: "center"});
+  $("pQty").focus(); $("pQty").select();
+}
+function clearPick() {
+  selected = null; $("pickbar").classList.add("hide");
+  $("sq").value = ""; hi = 0; renderSell(); $("sq").focus();
+}
+function addToCart() {
+  if (!selected) return;
+  const q = parseInt($("pQty").value, 10);
+  if (!q || q < 1) return toast("Enter a valid quantity.", true);
+  const ex = cart.find(l => l.id === selected.id);
+  if (q + (ex ? ex.q : 0) > selected.qty) return toast("Only " + selected.qty + " left in stock.", true);
+  if (ex) ex.q += q; else cart.push({id: selected.id, name: selected.name, price: selected.price, q});
+  clearPick();
+}
+function renderCart() {
+  const total = cart.reduce((s, l) => s + l.q * l.price, 0);
+  $("cart").innerHTML = cart.length ? cart.map((l, idx) => `
+    <div class="line"><div><div style="font-weight:600">${esc(l.name)}</div><div class="sub">${l.q} × ${money(l.price)}</div></div>
+    <span class="t">${money(l.q * l.price)}</span>
+    <button class="x" data-i="${idx}" aria-label="Remove ${esc(l.name)}">×</button></div>`).join("")
+    : `<div class="empty">Search for a medicine to start a sale.</div>`;
+  $("total").textContent = money(total);
+  $("sellBtn").disabled = !cart.length;
+  $("sellBtn").textContent = cart.length ? "Complete sale · " + money(total) : "Complete sale";
+  $("cart").querySelectorAll(".x").forEach(b => b.onclick = () => { cart.splice(+b.dataset.i, 1); renderCart(); });
+}
+$("sq").addEventListener("input", () => { selected = null; $("pickbar").classList.add("hide"); hi = 0; renderSell(); });
+$("sq").addEventListener("keydown", e => {
+  const list = sellMatches();
+  if (e.key === "ArrowDown") { e.preventDefault(); hi = Math.min(hi + 1, list.length - 1); renderSell(); }
+  else if (e.key === "ArrowUp") { e.preventDefault(); hi = Math.max(hi - 1, 0); renderSell(); }
+  else if (e.key === "Enter" && list[hi]) { e.preventDefault(); pickItem(list[hi].id); }
+});
+$("pQty").addEventListener("keydown", e => { if (e.key === "Enter") { e.preventDefault(); addToCart(); } if (e.key === "Escape") clearPick(); });
+$("addBtn").onclick = addToCart;
+$("clearBtn").onclick = () => { cart = []; renderCart(); $("sq").focus(); };
+$("sellBtn").onclick = async () => {
+  if (!cart.length) return;
+  $("sellBtn").disabled = true;
+  try {
+    const r = await api("sell", {method: "POST", body: {lines: cart.map(l => ({id: l.id, qty: l.q}))}});
+    cart = []; selected = null; $("pickbar").classList.add("hide"); $("sq").value = "";
+    const n = $("lastSale"); n.textContent = "Last sale: #" + r.sale_id + " · " + money(r.total); n.classList.remove("hide");
+    toast(r.newly_low.length ? "Sale saved. Running low: " + r.newly_low.join(", ") : "Sale saved · " + money(r.total));
+    items = (await api("items")).items; badgeFromItems(items);
+    renderSell(); if (window.innerWidth > 820) $("sq").focus();
+  } catch (e) { toast(e.message, true); renderCart(); }
+};
+
+/* ---------- Stock ---------- */
+function renderStock() {
+  const q = $("stq").value.trim().toLowerCase(), f = $("stf").value;
+  const list = items.filter(i => {
+    if (q && !i.name.toLowerCase().includes(q)) return false;
+    if (f === "low") return i.qty <= i.min_qty;
+    if (f === "exp") return i.qty > 0 && expState(i) === "soon";
+    if (f === "dead") return expState(i) === "dead";
+    return true;
+  });
+  $("stBody").innerHTML = list.length ? list.map(i => `
+    <tr><td class="name">${esc(i.name)}</td><td class="r">${money(i.price)}</td><td>${stockPill(i)}</td>
+    <td class="sub">${i.min_qty}</td><td>${expCell(i)}</td>
+    <td><div class="actions"><button class="btn ghost sm" data-act="restock" data-id="${i.id}">Add stock</button>
+    <button class="btn danger sm" data-act="del" data-id="${i.id}">Delete</button></div></td></tr>`).join("")
+    : `<tr><td colspan="6" class="empty">${items.length ? "Nothing matches this filter." : "No medicines yet. Add some under “Register stock”."}</td></tr>`;
+}
+$("stq").addEventListener("input", renderStock);
+$("stf").addEventListener("change", renderStock);
+$("stBody").addEventListener("click", async e => {
+  const b = e.target.closest("button[data-act]"); if (!b) return;
+  const it = items.find(i => i.id === +b.dataset.id); if (!it) return;
+  if (b.dataset.act === "restock") {
+    go("register"); $("rN").value = it.name; fillFromExisting(); $("rQ").focus();
+  } else if (confirm("Delete " + it.name + " from stock?\nPast sales will stay in the sales history.")) {
+    try { await api("delete_item", {method: "POST", body: {id: it.id}}); toast(it.name + " deleted"); refresh(); }
+    catch (err) { toast(err.message, true); }
+  }
+});
+
+/* ---------- Register ---------- */
+function renderRegisterList() { $("dl").innerHTML = items.map(i => `<option value="${esc(i.name)}">`).join(""); }
+function fillFromExisting() {
+  const ex = items.find(i => i.name.toLowerCase() === $("rN").value.trim().toLowerCase());
+  if (ex) {
+    $("rP").value = ex.price; $("rM").value = ex.min_qty; $("rD").value = ex.warn_days;
+    $("regNote").textContent = ex.name + " already exists with " + ex.qty + " in stock. The quantity you enter will be added to it.";
+  } else {
+    $("regNote").textContent = "If the medicine already exists, the quantity you enter is added to the current stock. For a new medicine, enter the selling price.";
+  }
+}
+$("rN").addEventListener("input", fillFromExisting);
+$("regBtn").onclick = async () => {
+  const body = {
+    name: $("rN").value.trim(), qty: parseInt($("rQ").value, 10) || 0,
+    price: $("rP").value === "" ? null : parseFloat($("rP").value),
+    min_qty: parseInt($("rM").value, 10) || 10, expiry: $("rE").value,
+    warn_days: parseInt($("rD").value, 10) || 90
+  };
+  $("regBtn").disabled = true;
+  try {
+    const r = await api("register", {method: "POST", body});
+    toast(r.created ? r.item.name + " registered" : r.item.name + ": stock added, now " + r.item.qty);
+    ["rN", "rQ", "rP", "rE"].forEach(id => $(id).value = ""); $("rM").value = 10; $("rD").value = 90;
+    fillFromExisting();
+    items = (await api("items")).items; renderRegisterList(); badgeFromItems(items);
+    $("rN").focus();
+  } catch (e) { toast(e.message, true); }
+  finally { $("regBtn").disabled = false; }
+};
+
+/* ---------- Sales history ---------- */
+async function loadSales() {
+  const d = $("sdate").value;
+  const r = await api("sales", {params: d ? {date: d} : {}});
+  const sum = r.sales.reduce((s, x) => s + x.total, 0);
+  $("sSummary").textContent = plural(r.sales.length, "sale") + " · " + money(sum);
+  $("salesBody").innerHTML = r.sales.length ? r.sales.map(s => `
+    <tr><td class="sub">#${s.id}</td><td>${esc(s.created_at.slice(0, 16))}</td><td>${saleItems(s)}</td><td class="r"><b>${money(s.total)}</b></td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">No sales found.</td></tr>`;
+}
+$("sdate").addEventListener("change", () => loadSales().catch(e => showErr(e.message)));
+$("sToday").onclick = () => { const t = new Date(); $("sdate").value = t.getFullYear() + "-" + String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0"); loadSales().catch(e => showErr(e.message)); };
+$("sAll").onclick = () => { $("sdate").value = ""; loadSales().catch(e => showErr(e.message)); };
+
+/* ---------- Backup and restore (phone) ---------- */
+window.addEventListener("save-error", e => toast(e.detail, true));
+function toBase64(bytes) {
+  let s = ""; const step = 0x8000;
+  for (let i = 0; i < bytes.length; i += step) s += String.fromCharCode.apply(null, bytes.subarray(i, i + step));
+  return btoa(s);
+}
+$("bkBtn").onclick = async () => {
+  const t = new Date(), p = n => String(n).padStart(2, "0");
+  const name = "pharmacy-" + t.getFullYear() + "-" + p(t.getMonth() + 1) + "-" + p(t.getDate()) + ".db";
+  try {
+    const bytes = window.Store.exportBytes();
+    try {
+      const {Filesystem, Share} = window.Capacitor.Plugins;
+      const w = await Filesystem.writeFile({path: name, data: toBase64(bytes), directory: "CACHE"});
+      await Share.share({title: "Pharmacy backup", url: w.uri});
+    } catch (e) {
+      if (e && /cancel/i.test(String(e.message || e))) return;
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(new Blob([bytes], {type: "application/octet-stream"}));
+      a.download = name; a.click();
+      toast("Backup file created: " + name);
+    }
+  } catch (e) { toast(e.message, true); }
+};
+$("rsBtn").onclick = () => $("rsFile").click();
+$("rsFile").onchange = async e => {
+  const f = e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  if (!confirm("Restore from " + f.name + "?\nThis replaces ALL data currently on this phone.")) return;
+  try {
+    await window.Store.importBytes(new Uint8Array(await f.arrayBuffer()));
+    toast("Backup restored"); refresh();
+  } catch (err) { toast(err.message, true); }
+};
+
+/* ---------- Start ---------- */
+$("today").textContent = new Date().toLocaleDateString("en-GB", {weekday: "long", day: "numeric", month: "long", year: "numeric"});
+go("dashboard");
+</script>
+</body>
+</html>

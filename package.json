@@ -1,0 +1,21 @@
+{
+  "name": "pharmacy-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Pharmacy stock and sales system (Android)",
+  "scripts": {
+    "android:add": "node scripts/copy-sqljs.js && npx cap add android",
+    "sync": "node scripts/copy-sqljs.js && npx cap sync android",
+    "open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/share": "^7.0.0",
+    "sql.js": "^1.12.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}
